@@ -1,0 +1,19 @@
+{
+  "name": "dong-yifei-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "motion": "^12.42.2",
+    "ogl": "^1.0.11",
+    "react": "latest",
+    "react-dom": "latest",
+    "vite": "latest"
+  }
+}
