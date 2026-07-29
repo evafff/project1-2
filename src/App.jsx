@@ -81,6 +81,7 @@ const workCards = [
     period: 'B端产品设计',
     description: '围绕业务管理、数据配置与运营协同场景，建立统一的后台界面与组件规范，优化复杂表单、数据列表及任务流程，提高信息检索效率、操作准确性与系统管理能力。',
     image: '/assets/work-admin.png',
+    heroImage: '/assets/admin-hero-tablet.png',
     detailImage: '/assets/admin-account-detail.png',
     detailImages: ['/assets/admin-account-detail.png', '/assets/admin-page-intro-detail.jpg'],
     detailIntro: '围绕业务管理、数据配置与运营协同场景，建立统一的后台界面与组件规范，提高信息检索效率、操作准确性与系统管理能力。',
@@ -516,8 +517,8 @@ function ProjectDetail({ project, index }) {
               </div>
             </dl>
           </div>
-          <div className="project-hero__media">
-            <img src={project.image} alt={`${project.title}项目展示`} />
+          <div className={`project-hero__media ${project.slug === 'data-dashboard' ? 'project-hero__media--dashboard' : ''} ${project.slug === 'admin-system' ? 'project-hero__media--admin' : ''}`}>
+            <img src={project.heroImage ?? project.image} alt={`${project.title}项目展示`} />
           </div>
         </section>
 

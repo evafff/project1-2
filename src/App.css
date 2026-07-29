@@ -1063,6 +1063,20 @@ video {
   object-fit: cover;
 }
 
+.project-hero__media--dashboard {
+  background: #e9f2ff;
+}
+
+.project-hero__media--dashboard img {
+  height: 100%;
+  object-fit: cover;
+  object-position: right center;
+}
+
+.project-hero__media--admin img {
+  object-position: center;
+}
+
 .project-detail {
   padding-top: 86px;
 }
