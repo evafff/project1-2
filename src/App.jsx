@@ -13,18 +13,22 @@ const navItems = [
 ];
 
 const baseHeroCards = [
-  '/assets/hero-card-pic1.jpg',
-  '/assets/hero-card-2.jpg',
-  '/assets/hero-card-3.jpg',
-  '/assets/hero-card-4.jpg',
-  '/assets/hero-card-5.jpg',
-  '/assets/hero-card-6.jpg',
-  '/assets/hero-card-7.jpg',
-  '/assets/hero-card-8.jpg',
+  '/assets/hero-st8.png',
+  '/assets/hero-st4.png',
+  '/assets/hero-st5.png',
+  '/assets/hero-st7.png',
+  '/assets/hero-st3.png',
+  '/assets/hero-st2.png',
+  '/assets/hero-st6.png',
+  '/assets/hero-st1.png',
 ];
+
+const heroCardStages = ['调研', '梳理', '构思', '情绪', '草图', '视觉', '规范', '交付'];
 
 const heroGalleryItems = baseHeroCards.map((image, index) => ({
   image,
+  stage: heroCardStages[index],
+  index,
   text: `WORK ${String(index + 1).padStart(2, '0')}`,
 }));
 
@@ -203,6 +207,7 @@ function SectionTitle({ eyebrow, title, animated = false }) {
 
 function Hero() {
   const [showPortfolioTitle, setShowPortfolioTitle] = useState(false);
+  const [activeGalleryItem, setActiveGalleryItem] = useState(null);
   const videoRef = useRef(null);
 
   useEffect(() => {
@@ -219,6 +224,17 @@ function Hero() {
       videoRef.current.playbackRate = 0.72;
     }
   }, []);
+
+  useEffect(() => {
+    if (!activeGalleryItem) return undefined;
+
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setActiveGalleryItem(null);
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [activeGalleryItem]);
 
   return (
     <section className="hero full-section" id="home">
@@ -289,8 +305,38 @@ function Hero() {
           scrollSpeed={2.8}
           scrollEase={0.1}
           autoSpeed={0.012}
+          paused={Boolean(activeGalleryItem)}
+          onItemActivate={setActiveGalleryItem}
         />
       </div>
+      {activeGalleryItem ? (
+        <div
+          className="hero-work-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${activeGalleryItem.stage}作品预览`}
+          onMouseDown={() => setActiveGalleryItem(null)}
+        >
+          <div className="hero-work-modal__panel" onMouseDown={(event) => event.stopPropagation()}>
+            <button
+              className="hero-work-modal__close"
+              type="button"
+              aria-label="关闭作品预览"
+              onClick={() => setActiveGalleryItem(null)}
+            >
+              ×
+            </button>
+            <div className="hero-work-modal__meta">
+              <span>DESIGN PROCESS</span>
+              <strong>{String(activeGalleryItem.index + 1).padStart(2, '0')}</strong>
+              <h2>{activeGalleryItem.stage}</h2>
+            </div>
+            <div className="hero-work-modal__image-wrap">
+              <img src={activeGalleryItem.image} alt={`${activeGalleryItem.stage}阶段作品`} />
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -528,7 +574,6 @@ function Strengths() {
               ) : (
                 <p>{item.body}</p>
               )}
-              <div className="shape-mark" aria-hidden="true" />
             </article>
           ))}
         </div>

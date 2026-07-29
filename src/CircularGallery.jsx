@@ -184,10 +184,18 @@ class CircularGalleryApp {
     scrollSpeed = 2,
     scrollEase = 0.08,
     autoSpeed = 0.014,
+    paused = false,
+    onItemActivate,
+    onItemHover,
   } = {}) {
     this.container = container;
     this.scrollSpeed = scrollSpeed;
     this.autoSpeed = autoSpeed;
+    this.paused = paused;
+    this.onItemActivate = onItemActivate;
+    this.onItemHover = onItemHover;
+    this.hoveredItemIndex = null;
+    this.hasDragged = false;
     this.scroll = { ease: scrollEase, current: 0, target: 0, last: 0 };
     this.onCheckDebounce = debounce(this.onCheck.bind(this), 180);
     this.createRenderer();
@@ -283,24 +291,64 @@ class CircularGalleryApp {
 
   onTouchDown = (event) => {
     this.isDown = true;
+    this.hasDragged = false;
     this.scroll.position = this.scroll.current;
     this.start = event.touches ? event.touches[0].clientX : event.clientX;
     this.container.setPointerCapture?.(event.pointerId);
   };
 
   onTouchMove = (event) => {
+    this.setHoveredItem(this.getItemAtEvent(event));
     if (!this.isDown) return;
 
     const x = event.touches ? event.touches[0].clientX : event.clientX;
+    if (Math.abs(x - this.start) > 7) this.hasDragged = true;
     const distance = (this.start - x) * (this.scrollSpeed * 0.025);
     this.scroll.target = this.scroll.position + distance;
   };
 
   onTouchUp = (event) => {
+    const item = this.getItemAtEvent(event);
+    if (!this.hasDragged && item) this.onItemActivate?.(item);
     this.isDown = false;
     this.container.releasePointerCapture?.(event.pointerId);
     this.onCheck();
   };
+
+  onPointerLeave = () => {
+    this.isDown = false;
+    this.setHoveredItem(null);
+  };
+
+  getItemAtEvent(event) {
+    if (!this.medias?.length || !this.viewport || !this.screen) return null;
+
+    const rect = this.container.getBoundingClientRect();
+    const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+    const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+    const x = ((clientX - rect.left) / rect.width - 0.5) * this.viewport.width;
+    const y = (0.5 - (clientY - rect.top) / rect.height) * this.viewport.height;
+    const candidates = this.medias.filter((media) => (
+      Math.abs(x - media.plane.position.x) <= media.plane.scale.x / 2
+      && Math.abs(y - media.plane.position.y) <= media.plane.scale.y / 2
+    ));
+
+    if (!candidates.length) return null;
+
+    const media = candidates.reduce((closest, candidate) => (
+      Math.abs(candidate.plane.position.x) < Math.abs(closest.plane.position.x) ? candidate : closest
+    ));
+    return this.mediasImages[media.index % this.baseLength];
+  }
+
+  setHoveredItem(item) {
+    const nextIndex = item?.index ?? null;
+    if (nextIndex === this.hoveredItemIndex) return;
+
+    this.hoveredItemIndex = nextIndex;
+    this.container.style.cursor = item ? 'pointer' : 'grab';
+    this.onItemHover?.(item);
+  }
 
   onWheel = (event) => {
     const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
@@ -360,7 +408,7 @@ class CircularGalleryApp {
   };
 
   update = () => {
-    if (!this.isDown) {
+    if (!this.isDown && !this.paused) {
       this.scroll.target += this.autoSpeed;
     }
     this.scroll.current = lerp(this.scroll.current, this.scroll.target, this.scroll.ease);
@@ -385,7 +433,7 @@ class CircularGalleryApp {
     this.container.addEventListener('pointerdown', this.onTouchDown);
     this.container.addEventListener('pointermove', this.onTouchMove);
     this.container.addEventListener('pointerup', this.onTouchUp);
-    this.container.addEventListener('pointerleave', this.onTouchUp);
+    this.container.addEventListener('pointerleave', this.onPointerLeave);
     this.container.addEventListener('keydown', this.onKeyDown);
   }
 
@@ -397,7 +445,7 @@ class CircularGalleryApp {
     this.container.removeEventListener('pointerdown', this.onTouchDown);
     this.container.removeEventListener('pointermove', this.onTouchMove);
     this.container.removeEventListener('pointerup', this.onTouchUp);
-    this.container.removeEventListener('pointerleave', this.onTouchUp);
+    this.container.removeEventListener('pointerleave', this.onPointerLeave);
     this.container.removeEventListener('keydown', this.onKeyDown);
 
     if (this.renderer?.gl?.canvas?.parentNode) {
@@ -413,8 +461,19 @@ export default function CircularGallery({
   scrollSpeed = 2,
   scrollEase = 0.08,
   autoSpeed = 0.014,
+  paused = false,
+  onItemActivate,
+  onItemHover,
 }) {
   const containerRef = useRef(null);
+  const galleryAppRef = useRef(null);
+  const onItemActivateRef = useRef(onItemActivate);
+  const onItemHoverRef = useRef(onItemHover);
+
+  useEffect(() => {
+    onItemActivateRef.current = onItemActivate;
+    onItemHoverRef.current = onItemHover;
+  }, [onItemActivate, onItemHover]);
 
   useEffect(() => {
     if (!containerRef.current) return undefined;
@@ -426,10 +485,21 @@ export default function CircularGallery({
       scrollSpeed,
       scrollEase,
       autoSpeed,
+      paused,
+      onItemActivate: (item) => onItemActivateRef.current?.(item),
+      onItemHover: (item) => onItemHoverRef.current?.(item),
     });
+    galleryAppRef.current = app;
 
-    return () => app.destroy();
+    return () => {
+      galleryAppRef.current = null;
+      app.destroy();
+    };
   }, [items, bend, borderRadius, scrollSpeed, scrollEase, autoSpeed]);
+
+  useEffect(() => {
+    if (galleryAppRef.current) galleryAppRef.current.paused = paused;
+  }, [paused]);
 
   return (
     <div
