@@ -65,7 +65,7 @@ const workCards = [
     description: '基于业务数据与管理目标构建可视化展示体系，通过指标分层、图表组合与空间布局，将复杂数据转化为清晰直观的信息内容，提升数据洞察、实时监控与辅助决策效率。',
     image: '/assets/work-data.png',
     detailImage: '/assets/data-dashboard-detail.png',
-    detailImages: ['/assets/data-dashboard-detail.png', '/assets/data-traffic-detail.png'],
+    detailImages: ['/assets/data-dashboard-detail.png'],
     detailIntro: '基于业务数据与管理目标构建可视化展示体系，通过指标分层、图表组合与空间布局，将复杂数据转化为清晰直观的信息内容。',
     detailHeading: '从数据指标到大屏展示的可视化设计',
     detailSteps: [
